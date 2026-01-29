@@ -1,0 +1,1750 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<!--
+============================================================
+FORKLIFT CONFIG (EDIT THESE VALUES)
+============================================================
+
+1) Organization / Branding
+- ORG_DISPLAY_NAME: Human-readable org name shown in UI + signature
+- APP_TITLE: Browser tab title
+- UI_H1_TITLE: Main page title text
+- UI_SUBTITLE: Subtitle under the page title
+- LOGO_URL: Public URL to your logo image (PNG recommended)
+- WEBSITE_TEXT: Text shown as the website link
+- WEBSITE_URL: Target URL for the website link
+
+2) Email Domain Enforcement (optional)
+- REQUIRE_APPROVED_DOMAIN:
+    - true  = only allow emails ending with APPROVED_EMAIL_DOMAIN
+    - false = allow any valid email
+- APPROVED_EMAIL_DOMAIN:
+    - Example: "example.org"
+
+3) Help / Support Contact (optional)
+- SUPPORT_EMAIL: mailto link shown on Step 3 callout
+
+4) Screenshot Hosting (optional)
+- SCREENSHOT_BASE:
+    - Must be a direct/raw image host URL (GitHub raw works great).
+    - Example:
+      https://raw.githubusercontent.com/YOUR_GH_USERNAME/YOUR_REPO/main/screenshots/
+- SHOTS: Filenames that exist under SCREENSHOT_BASE
+
+5) Admin Panel (optional)
+- ENABLE_ADMIN_PANEL: true/false
+- ADMIN_PASSWORD: password used in the prompt (front-end only; not secure)
+
+============================================================
+-->
+
+<title>Email Signature Builder</title>
+
+<style>
+  :root{
+    --bg:#d7d1ca;
+    --card:#ffffff;
+    --ink:#25282a;
+    --muted:#5f4b3c;
+    --line:#d6d1c3;
+    --soft:#f6f4f1;
+
+    --danger:#b00020;
+    --dangerSoft:#fff0f2;
+    --ok:#0a7a2f;
+    --warn:#9a5a00;
+
+    --brandRed:#b00020;
+    --brandRedHover:#8f001a;
+
+    --green:#2e7d32;
+    --greenHover:#246528;
+
+    --radius:16px;
+
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    font-size: 17px;
+  }
+
+  *{ box-sizing:border-box; }
+  body{ margin:16px; background:var(--bg); color:var(--ink); }
+  .wrap{ max-width:1180px; margin:0 auto; }
+
+  header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .titleRow{ display:flex; align-items:center; gap:12px; flex:1 1 auto; min-width:280px; }
+  .titleRow img{ height:50px; border-radius:12px; background:var(--card); padding:6px; border:1px solid var(--line); }
+  h1{ margin:0; font-size:22px; letter-spacing:.2px; }
+  .sub{ margin:6px 0 0; color:#3b3f44; font-size:14px; line-height:1.35; }
+
+  .headerActions{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+  .adminBtnTop{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid #bdb4ab;
+    background:#fbfaf8;
+    color:#1f2326;
+    font-weight:900;
+    cursor:pointer;
+    white-space:nowrap;
+    transition: all 0.2s ease;
+  }
+  .adminBtnTop:hover{ background:#fff; }
+  .adminBtnTop .lock{ opacity:.75; }
+
+  .helpBtn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid var(--brandRed);
+    background:var(--brandRed);
+    color:#fff;
+    font-weight:900;
+    cursor:pointer;
+    white-space:nowrap;
+    box-shadow:0 10px 20px rgba(176,0,32,.18);
+    transition: all 0.2s ease;
+  }
+  .helpBtn:hover{ background:var(--brandRedHover); border-color:var(--brandRedHover); }
+  .helpBtn:active{ transform:translateY(1px); }
+  .helpBtn .dot{
+    width:8px; height:8px; border-radius:99px; background:#fff; opacity:.9;
+    box-shadow:0 0 0 3px rgba(255,255,255,.18);
+  }
+
+  .grid{ display:grid; grid-template-columns:460px 1fr; gap:14px; align-items:start; }
+  @media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px;
+    box-shadow:0 10px 24px rgba(0,0,0,.06);
+  }
+
+  .sectionTitle{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:0 0 10px; }
+  .sectionTitle h2{ margin:0; font-size:20px; letter-spacing:.2px; }
+  .sectionHelp{ margin:0; font-size:14px; color:#51565c; line-height:1.4; }
+  .sectionHelp b{ color:#1f2326; }
+
+  .divider{ height:1px; background:var(--line); margin:14px 0; }
+  .hint{ margin-top:8px; font-size:13px; color:#51565c; line-height:1.35; }
+
+  label{ display:block; font-size:13px; margin:10px 0 6px; color:#1f2326; }
+  .req::after{ content:" *"; color:var(--danger); font-weight:900; }
+
+  input{
+    width:100%;
+    padding:12px;
+    border:1px solid #cfc9c2;
+    border-radius:14px;
+    font-size:17px;
+    background:var(--soft);
+    outline:none;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  input:focus{ border-color:#a99f96; box-shadow:0 0 0 3px rgba(95,75,60,.10); background:#fff; }
+  input.invalid{ border-color:var(--danger); background:var(--dangerSoft); box-shadow:none; }
+
+  .phoneGroup { display:flex; gap:10px; align-items:stretch; }
+  .phoneGroup input:first-child { flex:1; }
+  .phoneGroup input:last-child { width:140px; }
+
+  .btnRow{ display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; align-items:center; }
+  button{
+    padding:12px 16px;
+    border-radius:16px;
+    border:1px solid #c9c2bb;
+    background:#f3f1ee;
+    font-weight:900;
+    cursor:pointer;
+    color:var(--ink);
+    transition: all 0.2s ease;
+    font-size:16px;
+  }
+  button:disabled{ opacity:.55; cursor:not-allowed; }
+
+  button.primary{ background:#25282a; color:#fff; border-color:#25282a; }
+  button.success{ background:var(--green); color:#fff; border-color:var(--green); }
+  button.success:hover{ background:var(--greenHover); border-color:var(--greenHover); }
+  button:active{ transform:translateY(1px); }
+
+  @keyframes flashSuccess {
+    0% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+  }
+  button.copied { animation: flashSuccess 0.35s ease-out; }
+
+  .status{ margin-top:10px; font-size:13px; line-height:1.35; min-height:34px; }
+  .status .ok{ color:var(--ok); font-weight:900; }
+  .status .warn{ color:var(--warn); font-weight:900; }
+  .status .err{ color:var(--danger); font-weight:900; }
+
+  .callout{
+    margin-top:12px;
+    padding:14px 16px;
+    border-radius:16px;
+    border:1px solid rgba(176,0,32,.25);
+    background:rgba(176,0,32,.05);
+    color:#1f2326;
+    font-size:14px;
+    line-height:1.35;
+  }
+  .callout b{ color:var(--danger); }
+  .callout a{ color:var(--brandRed); font-weight:900; text-decoration:none; border-bottom:2px solid rgba(176,0,32,.25); }
+  .callout a:hover{ border-bottom-color: rgba(176,0,32,.6); }
+
+  .appGrid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+    margin-top:10px;
+  }
+  .appOpt{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    padding:12px 14px;
+    border-radius:18px;
+    border:2px solid rgba(214,209,195,.9);
+    background:#fff;
+    cursor:pointer;
+    user-select:none;
+  }
+  .appOpt:hover{ background:#fbfaf8; }
+  .appOpt input{ width:auto; margin-top:3px; transform:scale(1.1); }
+  .appOptTitle{ margin:0; font-weight:900; font-size:16px; color:#1f2326; }
+  .appOptDesc{ margin:3px 0 0; font-size:13px; color:#51565c; line-height:1.3; }
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:3px 10px;
+    border-radius:999px;
+    border:1px solid #cfc9c2;
+    background:#fbfaf8;
+    font-weight:900;
+    font-size:12px;
+    color:#51565c;
+    margin-left:10px;
+    white-space:nowrap;
+  }
+  .rowBetween{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+
+  .previewWrap{
+    padding:12px;
+    border:2px dashed #bdb4ab;
+    border-radius:16px;
+    background:#fbfaf8;
+    overflow-x:auto;
+    min-height:74px;
+  }
+
+  .instGrid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+    margin-top:12px;
+  }
+  .instCard{
+    border:2px solid rgba(214,209,195,.9);
+    border-radius:18px;
+    background:#fff;
+    padding:14px;
+  }
+  .instHead{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    margin-bottom:8px;
+  }
+  .stepNum{
+    width:34px;
+    height:34px;
+    border-radius:999px;
+    border:2px solid #cfc9c2;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    color:#1f2326;
+    background:#fbfaf8;
+    flex:0 0 auto;
+  }
+  .instCard h3{ margin:0; font-size:18px; letter-spacing:.2px; }
+  .instCard p{ margin:6px 0; font-size:14px; color:#2a2e32; line-height:1.4; }
+  .instCard ul{ margin:10px 0 0 18px; padding:0; }
+  .instCard li{ margin:8px 0; color:#1f2326; font-size:14px; line-height:1.35; }
+
+  details.ss{
+    margin-top:12px;
+    border:2px solid rgba(214,209,195,.9);
+    background:#fbfaf8;
+    border-radius:18px;
+    padding:10px 12px;
+  }
+  details.ss summary{
+    cursor:pointer;
+    font-weight:900;
+    color:#1f2326;
+    list-style:none;
+    outline:none;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    user-select:none;
+  }
+  details.ss summary::-webkit-details-marker{ display:none; }
+  .ssTitle{
+    display:flex; align-items:center; gap:10px;
+    font-size:16px;
+  }
+  .ssTitle small{
+    font-weight:800;
+    color:#51565c;
+    font-size:13px;
+  }
+  .caret{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:44px;
+    height:44px;
+    border-radius:16px;
+    border:2px solid rgba(214,209,195,.9);
+    background:#fff;
+    color:#1f2326;
+    font-weight:900;
+    line-height:1;
+    flex:0 0 auto;
+    transition: transform .18s ease;
+  }
+  details[open] .caret{ transform: rotate(180deg); }
+
+  .ssGrid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-top:12px;
+  }
+  @media (max-width:800px){
+    .ssGrid{ grid-template-columns:1fr; }
+  }
+  .thumb{
+    border:2px solid rgba(214,209,195,.9);
+    border-radius:18px;
+    background:#fff;
+    padding:10px;
+  }
+  .thumbBtn{
+    all:unset;
+    cursor:pointer;
+    display:block;
+    width:100%;
+  }
+  .thumb img{
+    width:100%;
+    height:auto;
+    max-height:260px;
+    object-fit:contain;
+    display:block;
+    border-radius:12px;
+    background:#f3f1ee;
+  }
+  .thumbCap{
+    margin-top:8px;
+    font-size:13px;
+    color:#51565c;
+    font-weight:900;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .zoomHint{
+    font-weight:900;
+    color:#2a2e32;
+    opacity:.85;
+  }
+  .ssNote{
+    margin-top:10px;
+    font-size:14px;
+    color:#51565c;
+    line-height:1.35;
+  }
+
+  .adminPanel{ display:none; margin-top:12px; }
+  .adminPanel.show{ display:block; }
+
+  details.admin{
+    border:2px solid rgba(214,209,195,.9);
+    background:#fbfaf8;
+    border-radius:18px;
+    padding:10px 12px;
+    margin-top:12px;
+  }
+  details.admin summary{
+    cursor:pointer;
+    font-weight:900;
+    color:#1f2326;
+    list-style:none;
+    outline:none;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  details.admin summary::-webkit-details-marker{ display:none; }
+
+  textarea{
+    width:100%;
+    min-height:220px;
+    padding:12px;
+    border:1px solid #cfc9c2;
+    border-radius:14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size:13px;
+    background:#fff;
+    outline:none;
+    white-space:pre;
+  }
+
+  .modalBackdrop{
+    position:fixed; inset:0;
+    background:rgba(37,40,42,.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+    z-index:9999;
+    backdrop-filter: blur(2px);
+  }
+  .modal{
+    width:min(980px, 100%);
+    background:#fff;
+    border-radius:20px;
+    border:1px solid var(--line);
+    padding:14px;
+    box-shadow:0 18px 60px rgba(0,0,0,.22);
+  }
+  .modalTop{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .modal h2{ margin:0; font-size:18px; }
+  .topClose{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid #cfc9c2;
+    background:#fbfaf8;
+    font-weight:900;
+    cursor:pointer;
+  }
+  .topClose:hover{ background:#fff; }
+
+  .tabs{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:12px;
+  }
+  .tabBtn{
+    border:2px solid rgba(214,209,195,.9);
+    background:#fff;
+    border-radius:999px;
+    padding:10px 14px;
+    font-weight:900;
+    cursor:pointer;
+    color:#1f2326;
+    font-size:14px;
+  }
+  .tabBtn.active{
+    background:#25282a;
+    border-color:#25282a;
+    color:#fff;
+  }
+  .tabPanel{
+    margin-top:12px;
+    border:2px solid rgba(214,209,195,.9);
+    background:#fbfaf8;
+    border-radius:18px;
+    padding:14px;
+    display:none;
+  }
+  .tabPanel.show{ display:block; }
+  .tabPanel h3{ margin:0 0 8px; font-size:16px; }
+  .tabPanel ul{ margin:10px 0 0 18px; padding:0; }
+  .tabPanel li{ margin:8px 0; color:#1f2326; font-size:14px; line-height:1.35; }
+
+  .kbd{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    background:#f3f1ee;
+    padding:2px 8px;
+    border-radius:9px;
+    border:1px solid var(--line);
+    font-weight:900;
+  }
+
+  .closeRow{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    margin-top:12px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+
+  .imgModal{
+    width:min(1100px, 100%);
+    max-height: 92vh;
+    overflow:auto;
+    background:#fff;
+    border-radius:20px;
+    border:1px solid var(--line);
+    padding:14px;
+    box-shadow:0 18px 60px rgba(0,0,0,.22);
+  }
+  .imgModalTop{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:10px;
+  }
+  .imgTitle{
+    font-weight:900;
+    font-size:16px;
+    margin:0;
+  }
+  .imgWrap{
+    border:2px solid rgba(214,209,195,.9);
+    border-radius:18px;
+    background:#fbfaf8;
+    padding:12px;
+  }
+  .imgWrap img{
+    width:100%;
+    height:auto;
+    display:block;
+    border-radius:14px;
+    background:#f3f1ee;
+  }
+
+  #eggBadge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:9px 11px;
+    border-radius:14px;
+    border:2px dashed rgba(214,209,195,.9);
+    background:#fbfaf8;
+    font-weight:900;
+    font-size:13px;
+    color:#51565c;
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+  <header>
+    <div class="titleRow">
+      <img id="uiLogo" alt="Organization logo" />
+      <div>
+        <h1 id="uiH1">Email Signature Builder</h1>
+        <p class="sub" id="uiSub">Step 1 → Step 2 → Step 3</p>
+      </div>
+    </div>
+
+    <div class="headerActions">
+      <button class="adminBtnTop" id="btnAdminTop" type="button" aria-label="Admin">
+        <span class="lock">🔒</span> Admin
+      </button>
+
+      <button class="helpBtn" id="btnHelpTop" type="button" aria-label="Help / How-To">
+        <span class="dot"></span>
+        Help / How-To
+      </button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- STEP 1 -->
+    <section class="card" id="step1">
+      <div class="sectionTitle"><h2>Step 1. Set up your signature</h2></div>
+      <p class="sectionHelp">Choose where you use work email, enter your details, then click <b>Build Signature</b>.</p>
+
+      <div class="appGrid" aria-label="Choose where you use work email">
+        <label class="appOpt">
+          <input type="checkbox" id="use_gmail_web" />
+          <div class="rowBetween" style="width:100%;">
+            <div>
+              <p class="appOptTitle">Gmail (Web)</p>
+              <p class="appOptDesc">Set your signature in Gmail on your computer.</p>
+            </div>
+            <span class="pill">Computer</span>
+          </div>
+        </label>
+
+        <label class="appOpt">
+          <input type="checkbox" id="use_outlook_desktop" />
+          <div class="rowBetween" style="width:100%;">
+            <div>
+              <p class="appOptTitle">Outlook (Desktop)</p>
+              <p class="appOptDesc">Set your signature in Outlook on your computer.</p>
+            </div>
+            <span class="pill">Computer</span>
+          </div>
+        </label>
+
+        <label class="appOpt">
+          <input type="checkbox" id="use_gmail_mobile" />
+          <div class="rowBetween" style="width:100%;">
+            <div>
+              <p class="appOptTitle">Gmail (Mobile App)</p>
+              <p class="appOptDesc"><b>Quick settings change only.</b></p>
+            </div>
+            <span class="pill">Phone</span>
+          </div>
+        </label>
+
+        <label class="appOpt">
+          <input type="checkbox" id="use_outlook_mobile" />
+          <div class="rowBetween" style="width:100%;">
+            <div>
+              <p class="appOptTitle">Outlook (Mobile App)</p>
+              <p class="appOptDesc">Set your signature in the Outlook mobile app.</p>
+            </div>
+            <span class="pill">Phone</span>
+          </div>
+        </label>
+      </div>
+
+      <div class="divider"></div>
+
+      <label class="req" for="fullName">Full Name</label>
+      <input id="fullName" placeholder="First Last" autocomplete="name" />
+
+      <label class="req" for="jobTitle">Job Title</label>
+      <input id="jobTitle" placeholder="Job Title" />
+
+      <label class="req" for="email">Work Email</label>
+      <input id="email" placeholder="first.last@example.org" autocomplete="email" inputmode="email" />
+
+      <label for="cell">Cell Phone (optional)</label>
+      <input id="cell" placeholder="555-555-5555" inputmode="tel" />
+
+      <label for="phone" style="margin-top:12px;">Office Phone (optional)</label>
+      <div class="phoneGroup">
+        <input id="phone" placeholder="555-555-5555" inputmode="tel" />
+        <input id="ext" placeholder="Ext (1–4)" inputmode="numeric" maxlength="4" />
+      </div>
+      <div class="hint" style="margin-top:6px;"><b>Extension:</b> Numbers only please.</div>
+
+      <div class="btnRow">
+        <button id="btnReset" type="button">Reset</button>
+        <button id="btnGenerate" class="success" type="button">Build Signature</button>
+      </div>
+
+      <div id="status" class="status"></div>
+    </section>
+
+    <!-- STEP 2 + 3 -->
+    <div class="stack">
+      <!-- STEP 2 -->
+      <section class="card" id="step2">
+        <div class="sectionTitle"><h2>Step 2. Copy your signature</h2></div>
+        <p class="sectionHelp">Click <b>Copy Signature</b>, then move to Step 3.</p>
+
+        <div class="previewWrap" id="previewArea"></div>
+
+        <div class="btnRow" style="margin-top:12px;">
+          <button id="btnCopySignature" class="success" type="button" disabled>Copy Signature</button>
+        </div>
+
+        <div id="adminPanel" class="adminPanel" aria-hidden="true">
+          <div style="margin-top:10px;">
+            <div id="eggBadge">🥚 Easter Egg: <span id="eggState">Locked</span></div>
+          </div>
+
+          <details class="admin" id="plainTextDetails">
+            <summary>
+              <span>Plain Text</span>
+              <span class="caret" aria-hidden="true">˄</span>
+            </summary>
+            <div style="margin-top:10px;">
+              <textarea id="plainOut" spellcheck="false" placeholder="Build Signature first to generate Plain Text."></textarea>
+              <div class="btnRow" style="margin-top:10px;">
+                <button id="btnCopyText" type="button" disabled>Copy Plain Text</button>
+              </div>
+            </div>
+          </details>
+
+          <details class="admin" id="htmlDetails">
+            <summary>
+              <span>HTML</span>
+              <span class="caret" aria-hidden="true">˄</span>
+            </summary>
+            <div style="margin-top:10px;">
+              <textarea id="htmlOut" spellcheck="false" placeholder="Build Signature first to generate HTML."></textarea>
+              <div class="btnRow" style="margin-top:10px;">
+                <button id="btnCopyHtml" type="button" disabled>Copy HTML</button>
+                <button id="btnSave" type="button" disabled>Save to File</button>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- STEP 3 -->
+      <section class="card" id="step3">
+        <div class="sectionTitle"><h2>Step 3. Add your signature + adjust settings</h2></div>
+        <p class="sectionHelp">Complete all steps for the app(s) selected in Step 1.</p>
+
+        <div class="callout" style="margin-top:12px;">
+          <b>IMPORTANT:</b> Delete any old signature everywhere you use this work email before completing the steps below.
+        </div>
+
+        <div class="instGrid" id="instWrap"></div>
+
+        <div class="callout" style="margin-top:14px;">
+          <b>Need help?</b> Email support at
+          <a id="supportEmailLink" href="mailto:support@example.org">support@example.org</a>.
+          Include the app, device, and screenshots of your signature settings + what you pasted.
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- HELP MODAL -->
+<div class="modalBackdrop" id="helpBackdrop" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="modal">
+    <div class="modalTop">
+      <h2 id="helpTitle">Help – Email Signature</h2>
+      <button class="topClose" id="btnCloseHelpTop" type="button" aria-label="Close Help">✕ Close</button>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Help tabs">
+      <button class="tabBtn active" data-tab="general" type="button">General</button>
+      <button class="tabBtn" data-tab="gmail_web" type="button">Gmail (Web)</button>
+      <button class="tabBtn" data-tab="gmail_mobile" type="button">Gmail (Mobile App)</button>
+      <button class="tabBtn" data-tab="outlook_desktop" type="button">Outlook (Desktop)</button>
+      <button class="tabBtn" data-tab="outlook_mobile" type="button">Outlook (Mobile App)</button>
+    </div>
+
+    <div class="tabPanel show" id="tab_general" role="tabpanel">
+      <div class="callout" style="margin-top:0;">
+        <b>IMPORTANT:</b> Delete any old signature everywhere you use this work email before completing the steps below.
+      </div>
+
+      <h3 style="margin-top:12px;">General</h3>
+      <ul>
+        <li><b>Build once</b> on this page, then <b>set it everywhere</b> you send work email (computer + phone apps).</li>
+        <li><b>Paste carefully:</b> click inside the signature box, then paste with <span class="kbd">Ctrl/Cmd+V</span> (or right-click → Paste).</li>
+        <li><b>Set defaults:</b> choose the signature for <b>New messages</b> and <b>Replies/forwards</b> when that option exists.</li>
+        <li><b>Testing procedure:</b> send yourself a test email from <b>each</b> app you use. Check the <b>received</b> email (that’s what matters).</li>
+        <li><b>Outlook note:</b> the signature can look odd inside the Outlook compose window. If the received test email looks correct, you’re done.</li>
+        <li>If anything is off: delete the signature, paste again, save again, then test again.</li>
+      </ul>
+    </div>
+
+    <div class="tabPanel" id="tab_gmail_web" role="tabpanel">
+      <h3>Gmail (Web)</h3>
+      <ul>
+        <li>Open Gmail on your computer.</li>
+        <li>Click <b>Settings</b> (gear) → <b>See all settings</b>.</li>
+        <li><b>Scroll down</b> to <b>Signature</b>.</li>
+        <li>Delete any old signature for this account.</li>
+        <li>Create a new signature → paste using <b>Copy Signature</b>.</li>
+        <li>Set defaults for <b>New emails</b> and <b>Replies/forwards</b>.</li>
+        <li>Scroll down and click <b>Save Changes</b>.</li>
+      </ul>
+      <div class="ssGrid" style="margin-top:12px;">
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Gmail Web screenshot 1" data-zoom-src="" id="help_gw_1_btn">
+            <img id="help_gw_1" alt="Gmail Web screenshot 1" />
+          </button>
+          <div class="thumbCap">Gmail Web screenshot 1 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Gmail Web screenshot 2" data-zoom-src="" id="help_gw_2_btn">
+            <img id="help_gw_2" alt="Gmail Web screenshot 2" />
+          </button>
+          <div class="thumbCap">Gmail Web screenshot 2 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabPanel" id="tab_gmail_mobile" role="tabpanel">
+      <h3>Gmail (Mobile App)</h3>
+      <ul>
+        <li><b>You do NOT paste a signature here.</b></li>
+        <li>Open the Gmail app → Menu → <b>Settings</b>.</li>
+        <li>Tap your work account.</li>
+        <li>Open <b>Signature settings</b>.</li>
+        <li>Turn <b>Mobile Signature</b> <b>OFF</b> / blank → tap <b>Done</b>.</li>
+      </ul>
+
+      <div class="ssGrid" style="margin-top:12px;">
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Gmail App screenshot 1" data-zoom-src="" id="help_ga_1_btn">
+            <img id="help_ga_1" alt="Gmail App screenshot 1" />
+          </button>
+          <div class="thumbCap">Gmail App screenshot 1 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Gmail App screenshot 2" data-zoom-src="" id="help_ga_2_btn">
+            <img id="help_ga_2" alt="Gmail App screenshot 2" />
+          </button>
+          <div class="thumbCap">Gmail App screenshot 2 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Gmail App screenshot 3" data-zoom-src="" id="help_ga_3_btn">
+            <img id="help_ga_3" alt="Gmail App screenshot 3" />
+          </button>
+          <div class="thumbCap">Gmail App screenshot 3 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Gmail App screenshot 4" data-zoom-src="" id="help_ga_4_btn">
+            <img id="help_ga_4" alt="Gmail App screenshot 4" />
+          </button>
+          <div class="thumbCap">Gmail App screenshot 4 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabPanel" id="tab_outlook_desktop" role="tabpanel">
+      <h3>Outlook (Desktop)</h3>
+      <ul>
+        <li>Open Outlook and start a <b>New Email</b>.</li>
+        <li>Click <b>Signature</b> → <b>Signatures…</b> / <b>Manage Signatures</b>.</li>
+        <li>Delete any old signature for this account.</li>
+        <li>Create a new signature → paste using <b>Copy Signature</b>.</li>
+        <li>Set it for <b>New messages</b> and <b>Replies/forwards</b> → Save/OK.</li>
+      </ul>
+      <div class="ssGrid" style="margin-top:12px;">
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Outlook Desktop screenshot 1" data-zoom-src="" id="help_od_1_btn">
+            <img id="help_od_1" alt="Outlook Desktop screenshot 1" />
+          </button>
+          <div class="thumbCap">Outlook Desktop screenshot 1 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Outlook Desktop screenshot 2" data-zoom-src="" id="help_od_2_btn">
+            <img id="help_od_2" alt="Outlook Desktop screenshot 2" />
+          </button>
+          <div class="thumbCap">Outlook Desktop screenshot 2 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+      </div>
+      <div class="ssGrid" style="margin-top:12px;">
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Outlook (Mac) screenshot 1" data-zoom-src="" id="help_om_1_btn">
+            <img id="help_om_1" alt="Outlook (Mac) screenshot 1" />
+          </button>
+          <div class="thumbCap">Outlook (Mac) screenshot 1 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Outlook (Mac) screenshot 2" data-zoom-src="" id="help_om_2_btn">
+            <img id="help_om_2" alt="Outlook (Mac) screenshot 2" />
+          </button>
+          <div class="thumbCap">Outlook (Mac) screenshot 2 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+      </div>
+      <div class="ssGrid" style="margin-top:12px;">
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Outlook (Windows) screenshot 1" data-zoom-src="" id="help_ow_1_btn">
+            <img id="help_ow_1" alt="Outlook (Windows) screenshot 1" />
+          </button>
+          <div class="thumbCap">Outlook (Windows) screenshot 1 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Outlook (Windows) screenshot 2" data-zoom-src="" id="help_ow_2_btn">
+            <img id="help_ow_2" alt="Outlook (Windows) screenshot 2" />
+          </button>
+          <div class="thumbCap">Outlook (Windows) screenshot 2 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tabPanel" id="tab_outlook_mobile" role="tabpanel">
+      <h3>Outlook (Mobile App)</h3>
+      <ul>
+        <li>Open Outlook → Settings.</li>
+        <li>Open <b>Signature</b>.</li>
+        <li>Select your work account.</li>
+        <li>Delete any old signature, then paste using <b>Copy Signature</b>.</li>
+        <li>Save/Done, then test.</li>
+      </ul>
+      <div class="ssGrid" style="margin-top:12px;">
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Outlook App screenshot 1" data-zoom-src="" id="help_oa_1_btn">
+            <img id="help_oa_1" alt="Outlook App screenshot 1" />
+          </button>
+          <div class="thumbCap">Outlook App screenshot 1 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Outlook App screenshot 2" data-zoom-src="" id="help_oa_2_btn">
+            <img id="help_oa_2" alt="Outlook App screenshot 2" />
+          </button>
+          <div class="thumbCap">Outlook App screenshot 2 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Outlook App screenshot 3" data-zoom-src="" id="help_oa_3_btn">
+            <img id="help_oa_3" alt="Outlook App screenshot 3" />
+          </button>
+          <div class="thumbCap">Outlook App screenshot 3 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="Outlook App screenshot 4" data-zoom-src="" id="help_oa_4_btn">
+            <img id="help_oa_4" alt="Outlook App screenshot 4" />
+          </button>
+          <div class="thumbCap">Outlook App screenshot 4 <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="closeRow">
+      <div class="hint" style="margin:0;">Press <span class="kbd">Esc</span> to close.</div>
+      <button class="topClose" id="btnCloseHelp" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMAGE VIEWER MODAL -->
+<div class="modalBackdrop" id="imgBackdrop" role="dialog" aria-modal="true" aria-labelledby="imgTitle">
+  <div class="imgModal">
+    <div class="imgModalTop">
+      <p class="imgTitle" id="imgTitle">Screenshot</p>
+      <button class="topClose" id="btnCloseImgTop" type="button" aria-label="Close Screenshot">✕ Close</button>
+    </div>
+    <div class="imgWrap">
+      <img id="imgFull" alt="Screenshot preview" />
+    </div>
+    <div class="closeRow">
+      <div class="hint" style="margin:0;">Press <span class="kbd">Esc</span> to close.</div>
+      <button class="topClose" id="btnCloseImg" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // CONFIG (EDIT ME)
+  // ============================================================
+  const CONFIG = Object.freeze({
+    ORG_DISPLAY_NAME: "Example Organization",
+    APP_TITLE: "Email Signature Builder",
+    UI_H1_TITLE: "Email Signature Builder",
+    UI_SUBTITLE: "Step 1 → Step 2 → Step 3",
+
+    // Email domain validation
+    REQUIRE_APPROVED_DOMAIN: true,
+    APPROVED_EMAIL_DOMAIN: "example.org",
+
+    // Signature brand assets
+    LOGO_URL: "https://via.placeholder.com/256x256.png?text=Logo",
+    WEBSITE_TEXT: "example.org",
+    WEBSITE_URL: "https://example.org",
+
+    // Support contact (Step 3 callout)
+    SUPPORT_EMAIL: "support@example.org",
+
+    // Admin panel (front-end only; not secure)
+    ENABLE_ADMIN_PANEL: true,
+    ADMIN_PASSWORD: "password",
+
+    // Signature styling defaults (safe + generic)
+    SIGNATURE_VERSION: "2026.1",
+    LOGO_WIDTH_PX: 96,
+    LEFT_COL_PAD_RIGHT_PX: 14,
+    DIVIDER_PX: 1,
+    DIVIDER_COLOR: "#000000",
+    RIGHT_COL_PAD_LEFT_PX: 14,
+    LINK_COLOR: "#1155cc"
+  });
+
+  // Screenshot hosting
+  // IMPORTANT: Use raw.githubusercontent.com (GitHub "blob" URLs won't render in <img>)
+  const SCREENSHOT_BASE =
+    "https://raw.githubusercontent.com/YOUR_GH_USERNAME/YOUR_REPO/main/screenshots/";
+
+  // Screenshot filename lists (optional)
+  const SHOTS = Object.freeze({
+    gmailWeb: [ "Gmail-Web-1.png", "Gmail-Web-2.png" ],
+    gmailApp: [ "Gmail-App-1.png", "Gmail-App-2.png", "Gmail-App-3.png", "Gmail-App-4.png" ],
+    outlookMac: [ "Outlook-Mac-1.png", "Outlook-Mac-2.png" ],
+    outlookWin: [ "Outlook-Win-1.png", "Outlook-Win-2.png" ],
+    outlookApp: [ "Outlook-App-1.png", "Outlook-App-2.png", "Outlook-App-3.png", "Outlook-App-4.png" ],
+    outlookDesktop: [ "Outlook-Mac-1.png", "Outlook-Win-1.png" ]
+  });
+
+  // ============================================================
+  // DOM HELPERS
+  // ============================================================
+  const $ = (id) => document.getElementById(id);
+
+  // Apply UI config
+  document.title = CONFIG.APP_TITLE;
+  $("uiH1").textContent = CONFIG.UI_H1_TITLE;
+  $("uiSub").textContent = CONFIG.UI_SUBTITLE;
+
+  $("uiLogo").src = CONFIG.LOGO_URL;
+  $("uiLogo").alt = (CONFIG.ORG_DISPLAY_NAME || "Organization") + " logo";
+
+  $("helpTitle").textContent = "Help – " + (CONFIG.ORG_DISPLAY_NAME || "Email") + " Signature";
+
+  $("supportEmailLink").href = "mailto:" + CONFIG.SUPPORT_EMAIL;
+  $("supportEmailLink").textContent = CONFIG.SUPPORT_EMAIL;
+
+  // Hide admin button if disabled
+  if (!CONFIG.ENABLE_ADMIN_PANEL){
+    $("btnAdminTop").style.display = "none";
+  }
+
+  // ============================================================
+  // SMALL UTIL
+  // ============================================================
+  function enc(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;");
+  }
+
+  function isValidEmailCommon(v){
+    const s = v.trim();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+  }
+
+  function hasApprovedDomain(v){
+    const s = v.trim().toLowerCase();
+    return s.endsWith("@" + String(CONFIG.APPROVED_EMAIL_DOMAIN || "").toLowerCase());
+  }
+
+  function containsLetters(s){ return /[A-Za-z]/.test(s || ""); }
+
+  function groupDigits(digits, groups){
+    let out = [];
+    let idx = 0;
+    for (const g of groups){
+      if (idx >= digits.length) break;
+      out.push(digits.slice(idx, idx+g));
+      idx += g;
+    }
+    if (idx < digits.length) out.push(digits.slice(idx));
+    return out.join(" ");
+  }
+
+  function formatPhone(raw){
+    const original = (raw || "").trim();
+    if (!original) return "";
+
+    const hasPlus = original.startsWith("+");
+    const digits = original.replace(/\D+/g, "");
+    if (!digits) return original;
+
+    if (hasPlus){
+      const ccLen = Math.min(3, Math.max(1, digits.length - 7));
+      const cc = digits.slice(0, ccLen);
+      const rest = digits.slice(ccLen);
+      const restGrouped = groupDigits(rest, [2,3,4,4]);
+      return `+${cc} ${restGrouped}`.trim();
+    }
+
+    if (digits.length === 10){
+      return `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+    }
+    if (digits.length === 11 && digits.startsWith("1")){
+      const d = digits.slice(1);
+      return `+1 (${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+    }
+    if (digits.length === 7){
+      return `${digits.slice(0,3)}-${digits.slice(3)}`;
+    }
+    return groupDigits(digits, [3,3,4,4]);
+  }
+
+  function normalizeExt(raw){
+    const s = (raw || "").trim();
+    if (!s) return "";
+    const digitsOnly = s.replace(/\D+/g, "");
+    return digitsOnly.slice(0, 4);
+  }
+  function isValidExt(raw){
+    const s = (raw || "").trim();
+    if (!s) return true;
+    return /^\d{1,4}$/.test(s);
+  }
+
+  function setStatus(html){ $("status").innerHTML = html; }
+
+  // ============================================================
+  // DATA
+  // ============================================================
+  function getSelections(){
+    return {
+      gmailWeb: $("use_gmail_web").checked,
+      outlookDesktop: $("use_outlook_desktop").checked,
+      gmailMobile: $("use_gmail_mobile").checked,
+      outlookMobile: $("use_outlook_mobile").checked
+    };
+  }
+
+  function getData(){
+    const sel = getSelections();
+    return {
+      sel,
+      fullName: $("fullName").value.trim(),
+      jobTitle: $("jobTitle").value.trim(),
+      email: $("email").value.trim(),
+      cellRaw: $("cell").value,
+      officeRaw: $("phone").value,
+      extRaw: $("ext").value.trim()
+    };
+  }
+
+  function validate(d){
+    const issues = [];
+
+    if (!d.sel.gmailWeb && !d.sel.outlookDesktop && !d.sel.gmailMobile && !d.sel.outlookMobile){
+      issues.push({ field:"apps", msg:"Select at least one app in Step 1." });
+    }
+
+    if (!d.fullName) issues.push({ field:"fullName", msg:"Full Name is required." });
+    if (!d.jobTitle) issues.push({ field:"jobTitle", msg:"Job Title is required." });
+
+    if (!d.email){
+      issues.push({ field:"email", msg:"Work Email is required." });
+    } else {
+      if (!isValidEmailCommon(d.email)){
+        issues.push({ field:"email", msg:"Work Email doesn’t look valid." });
+      } else if (CONFIG.REQUIRE_APPROVED_DOMAIN && !hasApprovedDomain(d.email)){
+        issues.push({ field:"email", msg:`Email must end with @${CONFIG.APPROVED_EMAIL_DOMAIN}.` });
+      }
+    }
+
+    if (!isValidExt(d.extRaw)){
+      issues.push({ field:"ext", msg:"Office extension must be 1–4 digits (numbers only)." });
+    }
+    if (d.cellRaw && containsLetters(d.cellRaw)){
+      issues.push({ field:"cell", msg:"Cell phone must not contain letters." });
+    }
+    if (d.officeRaw && containsLetters(d.officeRaw)){
+      issues.push({ field:"phone", msg:"Office phone must not contain letters." });
+    }
+    return issues;
+  }
+
+  function clearValidationUI(){
+    ["fullName","jobTitle","email","cell","phone","ext"].forEach(id => $(id).classList.remove("invalid"));
+  }
+  function applyValidationUI(issues){
+    clearValidationUI();
+    const map = new Set(issues.map(x => x.field));
+    if (map.has("fullName")) $("fullName").classList.add("invalid");
+    if (map.has("jobTitle")) $("jobTitle").classList.add("invalid");
+    if (map.has("email")) $("email").classList.add("invalid");
+    if (map.has("cell")) $("cell").classList.add("invalid");
+    if (map.has("phone")) $("phone").classList.add("invalid");
+    if (map.has("ext")) $("ext").classList.add("invalid");
+  }
+
+  // ============================================================
+  // SIGNATURE HTML
+  // ============================================================
+  function buildSignatureHtml(d){
+    const cell = formatPhone(d.cellRaw);
+    let office = formatPhone(d.officeRaw);
+    const ext = normalizeExt(d.extRaw);
+    if (office && ext) office += ` x ${ext}`;
+
+    const phoneLines = [];
+    if (cell)   phoneLines.push(`<div>C: ${enc(cell)}</div>`);
+    if (office) phoneLines.push(`<div>O: ${enc(office)}</div>`);
+    const phonesBlock = phoneLines.length ? ("\n        " + phoneLines.join("\n        ") + "\n") : "\n";
+
+    const orgName = CONFIG.ORG_DISPLAY_NAME || "Organization";
+
+    return `<!-- =====================================================
+     EMAIL SIGNATURE
+     Org: ${enc(orgName)}
+     Version: ${enc(CONFIG.SIGNATURE_VERSION)}
+     ===================================================== -->
+<div>--</div>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
+  <tr>
+    <td style="padding:0 ${CONFIG.LEFT_COL_PAD_RIGHT_PX}px 0 0; vertical-align:middle; text-align:center;">
+      <img src="${enc(CONFIG.LOGO_URL)}"
+           width="${CONFIG.LOGO_WIDTH_PX}"
+           alt="${enc(orgName)}"
+           style="display:block; margin:0 auto; border:0; outline:none; text-decoration:none;">
+    </td>
+
+    <td width="${CONFIG.DIVIDER_PX}" bgcolor="${CONFIG.DIVIDER_COLOR}"
+        style="width:${CONFIG.DIVIDER_PX}px; background-color:${CONFIG.DIVIDER_COLOR}; font-size:0; line-height:0;">
+      &nbsp;
+    </td>
+
+    <td style="padding:0 0 0 ${CONFIG.RIGHT_COL_PAD_LEFT_PX}px; vertical-align:top;">
+      <div style="
+        font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+        font-size:11pt;
+        line-height:1.25;
+        mso-line-height-rule:exactly;
+        color:#000000;
+      ">
+        <div style="font-weight:700;">${enc(d.fullName)}</div>
+        <div style="font-weight:400;">${enc(d.jobTitle)}</div>
+
+        <div style="height:8px; line-height:8px; font-size:8px;">&nbsp;</div>
+
+        <div>
+          <a href="mailto:${enc(d.email)}" style="color:${CONFIG.LINK_COLOR}; text-decoration:none;">${enc(d.email)}</a>
+        </div>${phonesBlock}
+        <div>
+          <a href="${enc(CONFIG.WEBSITE_URL)}" style="color:${CONFIG.LINK_COLOR}; text-decoration:none;">${enc(CONFIG.WEBSITE_TEXT)}</a>
+        </div>
+      </div>
+    </td>
+  </tr>
+</table>`;
+  }
+
+  function buildPlainText(d){
+    const cell = formatPhone(d.cellRaw);
+    let office = formatPhone(d.officeRaw);
+    const ext = normalizeExt(d.extRaw);
+    if (office && ext) office += ` x ${ext}`;
+
+    const orgName = (CONFIG.ORG_DISPLAY_NAME || "Organization").trim();
+    const pad = Math.min(22, Math.max(8, orgName.length)); // keep it from looking goofy
+
+    const lines = [];
+    lines.push("--");
+    lines.push("");
+    lines.push(`${orgName.toUpperCase()} | ${d.fullName}`);
+    lines.push(`${" ".repeat(pad)} | ${d.jobTitle}`);
+    lines.push(`${" ".repeat(pad)} | ${d.email}`);
+    if (cell)   lines.push(`${" ".repeat(pad)} | C: ${cell}`);
+    if (office) lines.push(`${" ".repeat(pad)} | O: ${office}`);
+    lines.push(`${" ".repeat(pad)} | ${CONFIG.WEBSITE_TEXT}`);
+    return lines.join("\n");
+  }
+
+  // ============================================================
+  // COPY + FUN PHRASES
+  // ============================================================
+  const FUN_PHRASES = [
+    "Copied. Go forth and email responsibly.",
+    "Copied. May your inbox be ever calm.",
+    "Copied. This message self-destructs in… just kidding.",
+    "Copied. Please do not reply-all to this feeling.",
+    "Copied. You are now 10% more professional.",
+    "Copied. Respect the signature. Respect the process.",
+    "Copied. Proceed with confidence (and kindness).",
+    "Copied. Certified: ✨official✨",
+    "Copied. Now go hydrate and hit Send."
+  ];
+
+  const KONAMI_PHRASES = [
+    "Copied. You found the secret handshake. 🥚",
+    "Copied. Konami mode: activated. 🔥",
+    "Copied. Unlimited email lives granted. ♾️",
+    "Copied. Achievement unlocked: Signature Sensei."
+  ];
+
+  function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function stripToText(html){
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    tmp.querySelectorAll("br").forEach(br => br.replaceWith("\n"));
+    tmp.querySelectorAll("div, p, tr, td").forEach(el => {
+      if (!el.textContent.endsWith("\n")) el.appendChild(document.createTextNode("\n"));
+    });
+    return tmp.textContent.replace(/\n{3,}/g, "\n\n").trim();
+  }
+
+  async function copySignatureHtml(html){
+    try{
+      if (window.ClipboardItem && navigator.clipboard?.write){
+        const htmlBlob = new Blob([html], { type: "text/html" });
+        const textBlob = new Blob([stripToText(html)], { type: "text/plain" });
+        await navigator.clipboard.write([ new ClipboardItem({ "text/html": htmlBlob, "text/plain": textBlob }) ]);
+        return true;
+      }
+    } catch(_) {}
+    try{
+      if (navigator.clipboard?.writeText){
+        await navigator.clipboard.writeText(stripToText(html));
+        return true;
+      }
+    } catch(_) {}
+    return false;
+  }
+
+  async function copyTextValue(text){
+    try{
+      if (navigator.clipboard?.writeText){
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch(_) {}
+    return false;
+  }
+
+  function flashCopyButton(btn, phrase){
+    btn.classList.add("copied");
+    const orig = btn.dataset.origText || btn.textContent;
+    btn.dataset.origText = orig;
+    btn.textContent = phrase;
+    setTimeout(() => {
+      btn.classList.remove("copied");
+      btn.textContent = orig;
+    }, 1400);
+  }
+
+  // ============================================================
+  // STEP 3 RENDERING (conditional blocks + numbering)
+  // ============================================================
+  function screenshotUrl(filename){
+    return (SCREENSHOT_BASE || "") + encodeURIComponent(filename);
+  }
+
+  function makeScreenshotDetails(items, labelPrefix){
+    if (!items || !items.length) return "";
+    const thumbs = items.map((f, i) => {
+      const src = screenshotUrl(f);
+      const title = `${labelPrefix} screenshot ${i+1}`;
+      return `
+        <div class="thumb">
+          <button class="thumbBtn" type="button" data-zoom-title="${enc(title)}" data-zoom-src="${enc(src)}">
+            <img src="${enc(src)}" alt="${enc(title)}" loading="lazy" />
+          </button>
+          <div class="thumbCap">${enc(title)} <span class="zoomHint">Tap to zoom</span></div>
+        </div>
+      `;
+    }).join("");
+
+    return `
+      <details class="ss">
+        <summary>
+          <div class="ssTitle">📸 <span>Show screenshots</span> <small>(tap to expand)</small></div>
+          <div class="caret" aria-hidden="true">˄</div>
+        </summary>
+        <div class="ssGrid">${thumbs}</div>
+        <div class="ssNote">If your screen looks a little different, that’s okay — follow the same idea and look for “Signature”.</div>
+      </details>
+    `;
+  }
+
+  function buildInstCard(n, title, subtitle, bulletsHtml, screenshotsHtml){
+    return `
+      <div class="instCard">
+        <div class="instHead">
+          <div class="stepNum">${n}</div>
+          <div>
+            <h3>${enc(title)}</h3>
+            <p style="margin:4px 0 0;">${enc(subtitle)}</p>
+          </div>
+        </div>
+        <ul>${bulletsHtml}</ul>
+        ${screenshotsHtml || ""}
+      </div>
+    `;
+  }
+
+  function renderStep3(sel){
+    const wrap = $("instWrap");
+    const blocks = [];
+
+    if (sel.gmailWeb){
+      const bullets = [
+        "Open Gmail on your computer.",
+        "Click <b>Settings</b> (gear) → <b>See all settings</b>.",
+        "<b>Scroll down</b> to <b>Signature</b>.",
+        "Delete any old signature for this account.",
+        "Create a new signature → paste using <b>Copy Signature</b> (Ctrl/Cmd+V or right-click → Paste).",
+        "Set defaults for <b>New emails</b> and <b>Replies/forwards</b>.",
+        "Scroll down and click <b>Save Changes</b>.",
+        "Send yourself a test email to confirm."
+      ].map(x => `<li>${x}</li>`).join("");
+
+      blocks.push({
+        title: "Gmail (Web)",
+        subtitle: "Set your signature in Gmail on your computer.",
+        bullets,
+        shots: makeScreenshotDetails(SHOTS.gmailWeb, "Gmail Web")
+      });
+    }
+
+    if (sel.outlookDesktop){
+      const bullets = [
+        "Open Outlook and start a <b>New Email</b>.",
+        "Click <b>Signature</b> → <b>Signatures…</b> / <b>Manage Signatures</b>.",
+        "Delete any old signature for this account.",
+        "Create a new signature → paste (Ctrl/Cmd+V or right-click → Paste).",
+        "Set it for <b>New messages</b> and <b>Replies/forwards</b> → Save/OK.",
+        "Send yourself a test email to confirm."
+      ].map(x => `<li>${x}</li>`).join("");
+
+      const shots = makeScreenshotDetails([].concat(SHOTS.outlookMac, SHOTS.outlookWin), "Outlook Desktop");
+
+      blocks.push({
+        title: "Outlook (Desktop)",
+        subtitle: "Set your signature in Outlook on your computer.",
+        bullets,
+        shots
+      });
+    }
+
+    if (sel.gmailMobile){
+      const bullets = [
+        "<b>You do NOT create or paste a signature here.</b>",
+        "Open the Gmail app.",
+        "Open Menu → <b>Settings</b>.",
+        "Tap your work account.",
+        "Open <b>Signature settings</b>.",
+        "Turn <b>Mobile Signature</b> <b>OFF</b> / blank, then tap <b>Done</b>."
+      ].map(x => `<li>${x}</li>`).join("");
+
+      blocks.push({
+        title: "Gmail (Mobile App)",
+        subtitle: "Turn off Mobile Signature so the web signature is used.",
+        bullets,
+        shots: makeScreenshotDetails(SHOTS.gmailApp, "Gmail App")
+      });
+    }
+
+    if (sel.outlookMobile){
+      const bullets = [
+        "Open Outlook → <b>Settings</b>.",
+        "Open <b>Signature</b>.",
+        "Select your work account.",
+                "Delete any old signature, then paste using <b>Copy Signature</b>.",
+        "Save/Done, then test."
+      ].map(x => `<li>${x}</li>`).join("");
+
+      blocks.push({
+        title: "Outlook (Mobile App)",
+        subtitle: "Set your signature in the Outlook mobile app.",
+        bullets,
+        shots: makeScreenshotDetails(SHOTS.outlookApp, "Outlook App")
+      });
+    }
+
+    // Render blocks with continuous numbering
+    if (!blocks.length){
+      wrap.innerHTML = `
+        <div class="callout" style="margin-top:0;">
+          <b>Nothing selected.</b> Go back to Step 1 and select at least one app.
+        </div>
+      `;
+      return;
+    }
+
+    wrap.innerHTML = blocks.map((b, idx) =>
+      buildInstCard(idx + 1, b.title, b.subtitle, b.bullets, b.shots)
+    ).join("");
+  }
+
+  // ============================================================
+  // HELP MODAL TAB LOGIC
+  // ============================================================
+  function showHelpTab(tab){
+    document.querySelectorAll(".tabBtn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.tab === tab);
+    });
+    document.querySelectorAll(".tabPanel").forEach(p => p.classList.remove("show"));
+    const panel = $("tab_" + tab);
+    if (panel) panel.classList.add("show");
+  }
+
+  function openHelp(){
+    $("helpBackdrop").style.display = "flex";
+    showHelpTab("general");
+  }
+  function closeHelp(){
+    $("helpBackdrop").style.display = "none";
+  }
+
+  // ============================================================
+  // IMAGE VIEWER (ZOOM)
+  // ============================================================
+  function openImg(title, src){
+    $("imgTitle").textContent = title || "Screenshot";
+    $("imgFull").src = src || "";
+    $("imgBackdrop").style.display = "flex";
+  }
+  function closeImg(){
+    $("imgBackdrop").style.display = "none";
+    $("imgFull").src = "";
+  }
+
+  // Wire zoom clicks for dynamically generated thumbs
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest?.(".thumbBtn");
+    if (!btn) return;
+    const title = btn.getAttribute("data-zoom-title") || "Screenshot";
+    const src   = btn.getAttribute("data-zoom-src") || "";
+    if (src) openImg(title, src);
+  });
+
+  // ============================================================
+  // ADMIN PANEL (front-end only)
+  // ============================================================
+  function promptAdmin(){
+    const pw = prompt("Admin password:");
+    if (pw === null) return false;
+    if (String(pw) === String(CONFIG.ADMIN_PASSWORD || "")){
+      $("adminPanel").classList.add("show");
+      $("adminPanel").setAttribute("aria-hidden","false");
+      $("eggState").textContent = "Unlocked";
+      return true;
+    }
+    alert("Incorrect password.");
+    return false;
+  }
+
+  // Simple Konami unlock for fun: up up down down left right left right b a
+  const KONAMI = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+  let konamiIdx = 0;
+  let konamiOn = false;
+
+  document.addEventListener("keydown", (e) => {
+    if (!CONFIG.ENABLE_ADMIN_PANEL) return;
+
+    const key = e.key;
+    const expected = KONAMI[konamiIdx];
+    if (key === expected){
+      konamiIdx++;
+      if (konamiIdx >= KONAMI.length){
+        konamiOn = true;
+        konamiIdx = 0;
+        $("eggState").textContent = "Konami Mode";
+        $("adminPanel").classList.add("show");
+        $("adminPanel").setAttribute("aria-hidden","false");
+      }
+    } else {
+      konamiIdx = 0;
+    }
+
+    // Close modals with Esc
+    if (key === "Escape"){
+      closeHelp();
+      closeImg();
+    }
+  });
+
+  // ============================================================
+  // HELP MODAL SCREENSHOT SOURCES (optional)
+  // ============================================================
+  function setHelpShots(){
+    const map = [
+      ["help_gw_1", SHOTS.gmailWeb?.[0]],
+      ["help_gw_2", SHOTS.gmailWeb?.[1]],
+      ["help_ga_1", SHOTS.gmailApp?.[0]],
+      ["help_ga_2", SHOTS.gmailApp?.[1]],
+      ["help_ga_3", SHOTS.gmailApp?.[2]],
+      ["help_ga_4", SHOTS.gmailApp?.[3]],
+      ["help_om_1", SHOTS.outlookMac?.[0]],
+      ["help_om_2", SHOTS.outlookMac?.[1]],
+      ["help_ow_1", SHOTS.outlookWin?.[0]],
+      ["help_ow_2", SHOTS.outlookWin?.[1]],
+      ["help_oa_1", SHOTS.outlookApp?.[0]],
+      ["help_oa_2", SHOTS.outlookApp?.[1]],
+      ["help_oa_3", SHOTS.outlookApp?.[2]],
+      ["help_oa_4", SHOTS.outlookApp?.[3]],
+      ["help_od_1", SHOTS.outlookDesktop?.[0]],
+      ["help_od_2", SHOTS.outlookDesktop?.[1]]
+    ];
+
+    map.forEach(([id, file]) => {
+      const img = $(id);
+      if (!img) return;
+      if (!SCREENSHOT_BASE || !file){
+        img.style.display = "none";
+        const btn = $(id + "_btn");
+        if (btn) btn.style.display = "none";
+        return;
+      }
+      const src = screenshotUrl(file);
+      img.src = src;
+
+      // ensure zoom works in Help modal too
+      const btn = $(id + "_btn");
+      if (btn){
+        btn.setAttribute("data-zoom-src", src);
+        btn.setAttribute("data-zoom-title", img.alt || "Screenshot");
+      }
+    });
+  }
+
+  // ============================================================
+  // GENERATE + COPY FLOW
+  // ============================================================
+  let lastHtml = "";
+  let lastPlain = "";
+
+  function updateOutputs(html, plain){
+    lastHtml = html;
+    lastPlain = plain;
+
+    $("previewArea").innerHTML = html;
+
+    // Enable copy buttons
+    $("btnCopySignature").disabled = !html;
+
+    // Admin-only outputs
+    $("plainOut").value = plain || "";
+    $("htmlOut").value = html || "";
+
+    $("btnCopyText").disabled = !plain;
+    $("btnCopyHtml").disabled = !html;
+    $("btnSave").disabled = !html;
+  }
+
+  function resetAll(){
+    $("use_gmail_web").checked = false;
+    $("use_outlook_desktop").checked = false;
+    $("use_gmail_mobile").checked = false;
+    $("use_outlook_mobile").checked = false;
+
+    $("fullName").value = "";
+    $("jobTitle").value = "";
+    $("email").value = "";
+    $("cell").value = "";
+    $("phone").value = "";
+    $("ext").value = "";
+
+    clearValidationUI();
+    setStatus("");
+    $("previewArea").innerHTML = "";
+    $("instWrap").innerHTML = "";
+    updateOutputs("", "");
+  }
+
+  $("btnReset").addEventListener("click", resetAll);
+
+  $("btnGenerate").addEventListener("click", () => {
+    const d = getData();
+    const issues = validate(d);
+
+    applyValidationUI(issues);
+
+    if (issues.length){
+      const msgs = issues.map(x => `<div>• ${enc(x.msg)}</div>`).join("");
+      setStatus(`<div class="err">Fix the items below:</div>${msgs}`);
+      $("btnCopySignature").disabled = true;
+      $("instWrap").innerHTML = "";
+      return;
+    }
+
+    // Build signature
+    const html = buildSignatureHtml(d);
+    const plain = buildPlainText(d);
+    updateOutputs(html, plain);
+
+    // Render conditional instructions
+    renderStep3(d.sel);
+
+    setStatus(`<div class="ok">Signature built. Next: click <b>Copy Signature</b> (Step 2).</div>`);
+  });
+
+  // Re-render Step 3 if app selection changes (only after build)
+  ["use_gmail_web","use_outlook_desktop","use_gmail_mobile","use_outlook_mobile"].forEach(id => {
+    $(id).addEventListener("change", () => {
+      const sel = getSelections();
+      if (lastHtml){
+        renderStep3(sel);
+      }
+    });
+  });
+
+  $("btnCopySignature").addEventListener("click", async () => {
+    if (!lastHtml) return;
+    const ok = await copySignatureHtml(lastHtml);
+    flashCopyButton($("btnCopySignature"), ok ? pick(konamiOn ? KONAMI_PHRASES : FUN_PHRASES) : "Copy failed — try again.");
+  });
+
+  // Admin copy buttons
+  $("btnCopyText").addEventListener("click", async () => {
+    if (!lastPlain) return;
+    const ok = await copyTextValue(lastPlain);
+    flashCopyButton($("btnCopyText"), ok ? pick(konamiOn ? KONAMI_PHRASES : FUN_PHRASES) : "Copy failed — try again.");
+  });
+
+  $("btnCopyHtml").addEventListener("click", async () => {
+    if (!lastHtml) return;
+    const ok = await copyTextValue(lastHtml);
+    flashCopyButton($("btnCopyHtml"), ok ? pick(konamiOn ? KONAMI_PHRASES : FUN_PHRASES) : "Copy failed — try again.");
+  });
+
+  $("btnSave").addEventListener("click", () => {
+    if (!lastHtml) return;
+    const blob = new Blob([lastHtml], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "email-signature.html";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  });
+
+  // ============================================================
+  // TOP BUTTONS + MODAL CLOSES
+  // ============================================================
+  $("btnHelpTop").addEventListener("click", openHelp);
+  $("btnCloseHelpTop").addEventListener("click", closeHelp);
+  $("btnCloseHelp").addEventListener("click", closeHelp);
+
+  $("helpBackdrop").addEventListener("click", (e) => {
+    if (e.target === $("helpBackdrop")) closeHelp();
+  });
+
+  $("btnCloseImgTop").addEventListener("click", closeImg);
+  $("btnCloseImg").addEventListener("click", closeImg);
+  $("imgBackdrop").addEventListener("click", (e) => {
+    if (e.target === $("imgBackdrop")) closeImg();
+  });
+
+  document.querySelectorAll(".tabBtn").forEach(btn => {
+    btn.addEventListener("click", () => showHelpTab(btn.dataset.tab));
+  });
+
+  if (CONFIG.ENABLE_ADMIN_PANEL){
+    $("btnAdminTop").addEventListener("click", promptAdmin);
+  }
+
+  // Initial setup
+  setHelpShots();
+  resetAll();
+</script>
+</body>
+</html>
